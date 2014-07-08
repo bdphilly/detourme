@@ -1,0 +1,77 @@
+html { 
+  height: 100%; 
+}
+
+body { 
+  height: 100%; 
+  margin: 0; 
+  padding: 0;
+}
+
+#map-container {
+  height: 100%; 
+  width: 60%;
+  display: inline-block;
+  position: fixed;
+}
+
+#map-canvas { 
+  height: 100%;
+  width: 100%;
+  display: inline-block;
+}
+
+#info {
+  width: 39%;
+  float: right;
+  margin-top: 0px;
+  margin-left: 0px;
+  display: inline-block; 
+  font-size: 24px;
+  /*border: 5px green solid;*/
+}
+
+#logo {
+  font-family: 'Pacifico', cursive;
+  color: rgb(0, 180, 174);
+  font-size: 56px;
+  margin-bottom: 10px;  
+}
+
+#reset {
+  float: right;
+  margin-right: 5%;
+  margin-bottom: 50px;
+}
+
+.panel {
+  width: 95%;
+  margin-right: 5px auto;
+  display: none;
+}
+
+#conclusion {
+  /*display: none;*/
+}
+
+#instructions {
+  margin-right: 30px;
+  margin-left: 10px;
+  margin-bottom: 30px;
+  font-size: 18px;
+  overflow: hidden;
+}
+
+.panel-body {
+  font-size: 14px;
+}
+
+.panel-title {
+  width: 100%;
+  clear: both;
+}
+
+#author {
+  text-align: right;
+  color: #fff;
+}

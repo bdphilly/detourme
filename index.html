@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>detour me</title>
+    <link rel="stylesheet" type="text/css" href="./application.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="./bootstrap.css" media="screen" />
+    <link href='http://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Titillium+Web:300' rel='stylesheet' type='text/css'>
+    <link rel="shortcut icon" href="./images/favicon.png" />
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBPIvZ3bB-vwerYgC6W5wH09C68z3o8bZQ&sensor=false&libraries=places">
+    </script>
+    <script src="./jquery.js"></script>
+    <script src="./bootstrap.min.js"></script>
+    <script type="text/javascript"> 
+      var directionsDisplay;
+      var directionsService = new google.maps.DirectionsService();
+      var map;
+      var markers = [];
+
+      function initialize() {
+        directionsDisplay = new google.maps.DirectionsRenderer();
+        var mapOptions = {
+          center: new google.maps.LatLng(37.745, -122.448),
+          zoom: 13
+        };
+
+        map = new google.maps.Map(document.getElementById("map-canvas"),
+          mapOptions);
+
+        directionsDisplay.setMap(map);
+
+        google.maps.event.addListener(map, 'rightclick', function(event) {
+          if (markers.length < 4) {
+            placeMarker(event.latLng);
+            addInfo(event);
+          }
+        });
+      }
+
+      function addInfo(event) {
+        geocodePosition(event.latLng, function (address) {
+          if (markers.length % 2 !== 0) {
+            var point = "Starting"
+          } else {
+            var point = "Finishing"
+          }
+          if (markers.length <= 2) {
+            var driver = "A "
+            var color = "#d45856"
+          } else {
+            var driver = "B "
+            var color = "#4574da"
+          }
+          
+          $('#drivers').append(
+            '<div class="panel panel-primary"><div class="panel-heading drive" style="background-color:' + 
+            color + '"><h3 class="panel-title">Person ' + 
+            driver + point + ' Point: '  + 
+            // (Math.round(event.latLng.lat() * 1000) / 1000) + ', Lng: ' + 
+            // (Math.round(event.latLng.lng() * 1000) / 1000) + '</h3>' +
+            '</h3></div><div class="panel-body">' + address + 
+            '<br></div></div>'
+          );
+          $('.panel').fadeIn('slow');
+        });
+      }
+
+      function placeMarker(location) {
+        var icons = [
+          "./images/a_start.png",
+          "./images/a_finish.png",
+          "./images/b_start.png",
+          "./images/b_finish.png"
+        ]        
+
+        var marker = new google.maps.Marker({
+            icon: icons[markers.length],
+            position: location, 
+            map: map
+        });
+        
+        markers.push(marker);
+        if (markers.length == 4) {
+          calcDist([0, 1], [2, 3], function(dist) {
+            this.aStarts = dist;
+            
+            calcDist([2, 3], [0, 1], function(dist) {
+              this.bStarts = dist;
+
+              if (this.aStarts < this.bStarts) {
+                calcRoute([0, 1], [2, 3]);
+                conclusion('Person A', 'Person B', aStarts, bStarts);
+              } else {
+                calcRoute([2, 3], [0, 1]);
+                conclusion('Person B', 'Person A', bStarts, aStarts);
+              }
+            });
+          });      
+        }
+      }
+
+      function conclusion(driver, passenger, distance, alternativeDist) {
+
+        $('#conclusion').append(
+          '<div class="panel panel-primary"><div class="panel-heading">' +
+          '<h3 class="panel-title">Conclusion:</h3></div><div class="panel-body" style="font-size: 18px">' +
+          driver + ' will drive and pick up ' + passenger +
+          '.<br>' + passenger + ' will sit shotgun and enjoy the ride.' +
+          '<br>The total route is ' + Math.round(distance / 1600 * 100) / 100 + ' miles.' +
+          '<br><br>By comparison, if ' + passenger + ' were to drive, the total distance would be: ' + Math.round(alternativeDist / 1600 * 100) / 100 + ' miles.</div></div>'
+        );
+
+        $('.panel').fadeIn('slow');
+
+        $('#reset').append('<button type="button" class="btn btn-primary reset">Reset Map</button>');
+        $('#reset').click(function() {
+          location.reload(true);
+        });  
+      }
+
+      function calcDist(driverA, driverB, callback) {
+        var waypts = [
+          {location: markers[driverB[0]].getPosition()},
+          {location: markers[driverB[1]].getPosition()}
+          ];
+
+        var request = {
+            origin: markers[driverA[0]].getPosition(),
+            waypoints: waypts,
+            destination: markers[driverA[1]].getPosition(),
+            travelMode: google.maps.TravelMode["DRIVING"],
+            unitSystem: google.maps.UnitSystem.IMPERIAL,
+        };
+
+        var x = directionsService.route(request, function(response, status) {
+          if (status == google.maps.DirectionsStatus.OK) {
+            var dist = 0;
+            var dstring = ""
+            for (var i = 0; i < 3; i++) {
+              dstring += response.routes[0].legs[i].distance.text;
+              dist += parseInt(response.routes[0].legs[i].distance.value);
+            }
+            console.log(dist);
+            console.log(dstring);
+
+            callback(dist);
+          }
+        });
+      }
+
+      function calcRoute(driverA, driverB) {
+        var waypts = [
+          {location: markers[driverB[0]].getPosition()},
+          {location: markers[driverB[1]].getPosition()}
+          ];
+
+        var request = {
+            origin: markers[driverA[0]].getPosition(),
+            waypoints: waypts,
+            destination: markers[driverA[1]].getPosition(),
+            travelMode: google.maps.TravelMode["DRIVING"],
+            unitSystem: google.maps.UnitSystem.IMPERIAL,
+        };
+        directionsService.route(request, function(response, status) {
+          if (status == google.maps.DirectionsStatus.OK) {
+            directionsDisplay.setDirections(response);
+            directionsDisplay.setOptions( { suppressMarkers: true } );
+          }
+        });
+      }
+      google.maps.event.addDomListener(window, 'load', initialize);
+
+      function geocodePosition(pos, callback) {
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode({
+          latLng: pos
+        }, function(responses) {
+          if (responses && responses.length > 0) {
+            callback(responses[0].formatted_address);
+          } else {
+            updateMarkerAddress('Cannot determine address at this location.');
+          }
+        });
+      }      
+    </script>
+
+</head>
+
+<body>
+  <div id="map-container">
+    <div id="map-canvas"></div>
+  </div>
+  <div id="info">
+    <div id="logo" align="center">Detour Me</div>
+    <div id="instructions">
+      <span style="font-size: 32px">What is <em>Detour Me?</em></span>
+      <br>
+      Two people need to get somewhere. Both could drive. But why waste gas? One driver can pick up the other and drop him/her off. We want to choose the shortest detour distance to pick-up and drop-off the other person. <em>Detour Me</em> figures out the most efficient route!</em> 
+      <br><br>
+      <span style="font-size: 32px">How it works:</span>
+      <br>
+      Right click (control + click) on the map to drop pins for drivers' starting/ending positions.
+      <br><br>
+      <div id="author">
+        Created by <a href="http://www.bryanphillips.me" target="_blank">Bryan Phillips</a>
+      </div>
+    </div>
+    <div id="drivers"></div>
+    <div id="conclusion"></div>
+    <div id="reset"></div>
+  </div>
+</body>
+
+</html>
