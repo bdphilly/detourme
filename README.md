@@ -12,3 +12,5 @@ Right click (control + click) on the map to drop pins for drivers' starting/endi
 Technologies
 ----
 JavaScript, jQuery, Google Maps Javascript API v3, Google Geocoding API, Bootstrap
+
+Try it live at: http://bryanphillips.me/detourme
